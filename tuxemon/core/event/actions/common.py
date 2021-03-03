@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Tuxemon
 # Copyright (C) 2014, William Edwards <shadowapex@gmail.com>
@@ -23,12 +22,9 @@
 # Adam Chevalier <chevalierAdam2@gmail.com>
 # Leif Theden <leif.theden@gmail.com>
 #
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import logging
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +41,7 @@ Description = Plugin containing utility functions common to multiple action plug
 """
 
 
-class CommonAction(object):
+class CommonAction:
     name = "Common"
 
     @staticmethod
@@ -56,7 +52,7 @@ class CommonAction(object):
         :param attribute: The attribute to modify.
         :param value: The value to set the attribute to, as a string.
 
-        :type character: core.Player
+        :type character: tuxemon.core.Player
         :type attribute: String
         :type value: String
 
@@ -91,7 +87,7 @@ class CommonAction(object):
         :param attribute: The attribute to modify.
         :param modifier: The modifier to apply the attribute by.
 
-        :type character: core.Player
+        :type character: tuxemon.core.Player
         :type attribute: String
         :type modifier: string
 

@@ -1,8 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import pygame
 
 from tuxemon.compat import Rect
@@ -18,7 +13,7 @@ class TextArea(Sprite):
     animated = True
 
     def __init__(self, font, font_color, bg=(192, 192, 192)):
-        super(TextArea, self).__init__()
+        super().__init__()
         self.rect = Rect(0, 0, 0, 0)
         self.drawing_text = False
         self.font = font
@@ -75,7 +70,7 @@ def draw_text(surface, text=None, rect=None, justify="left", align=None,
     autowrap. To place text on a new line, put TWO newline characters (\\n)  in your text.
 
     :param text: The text that you want to draw to the current menu item.
-        *Default: core.menu.Menu.text*
+        *Default: tuxemon.core.menu.Menu.text*
     :param left: The horizontal pixel position of the text relative to the menu's position.
         *Default: 0*
     :param top: The vertical pixel position of the text relative to the menu's position.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Tuxemon
 # Copyright (C) 2014, William Edwards <shadowapex@gmail.com>,
@@ -31,10 +30,6 @@
 It contains all the static and dynamic variables used throughout the game such
 as display resolution, scale, etc.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import logging
 import os.path
@@ -48,15 +43,14 @@ logger = logging.getLogger(__name__)
 # TODO: refact this out when other platforms supported (such as headless)
 PLATFORM = "pygame"
 
-
 # list of regular expressions to blacklist devices
 joystick_blacklist = [
     re.compile(r"Microsoft.*Transceiver.*"),
 ]
 
 # Create game dir if missing
-if not os.path.isdir(paths.USER_GAME_DIR):
-    os.makedirs(paths.USER_GAME_DIR)
+if not os.path.isdir(paths.USER_STORAGE_DIR):
+    os.makedirs(paths.USER_STORAGE_DIR)
 
 # Create game data dir if missing
 if not os.path.isdir(paths.USER_GAME_DATA_DIR):
@@ -77,7 +71,6 @@ with open(paths.USER_CONFIG_PATH, "w") as fp:
 
 # Set up the screen size and caption
 SCREEN_SIZE = CONFIG.resolution
-ORIGINAL_CAPTION = CONFIG.window_caption
 
 # Set the native tile size so we know how much to scale our maps
 TILE_SIZE = [16, 16]  # 1 tile = 16 pixels
@@ -101,7 +94,7 @@ if CONFIG.large_gui:
     TILE_SIZE[0] *= SCALE
     TILE_SIZE[1] *= SCALE
 elif CONFIG.scaling:
-    SCALE = int((SCREEN_SIZE[0] / NATIVE_RESOLUTION[0]))
+    SCALE = int(SCREEN_SIZE[0] / NATIVE_RESOLUTION[0])
     TILE_SIZE[0] *= SCALE
     TILE_SIZE[1] *= SCALE
 else:
@@ -130,7 +123,7 @@ def pygame_init():
 
     # Configure locale
     from tuxemon.core.locale import T
-    T.collect_languages()
+    T.collect_languages(CONFIG.recompile_translations)
 
     # Configure databases
     from tuxemon.core.db import db
@@ -138,9 +131,14 @@ def pygame_init():
 
     logger.debug("pygame init")
     pg.init()
-    pg.display.set_caption(ORIGINAL_CAPTION)
+    pg.display.set_caption(CONFIG.window_caption)
 
-    fullscreen = pg.FULLSCREEN if CONFIG.fullscreen else 0
+    from tuxemon.core import platform
+
+    if platform.android:
+        fullscreen = pg.FULLSCREEN
+    else:
+        fullscreen = pg.FULLSCREEN if CONFIG.fullscreen else 0
     flags = pg.HWSURFACE | pg.DOUBLEBUF | fullscreen
 
     SCREEN = pg.display.set_mode(SCREEN_SIZE, flags)
@@ -168,32 +166,40 @@ def pygame_init():
             joystick.init()
             JOYSTICKS.append(joystick)
 
-    from tuxemon.core.platform import android
-    # Map the appropriate android keys if we're on android
-    if android:
-        android.init()
-        android.map_key(android.KEYCODE_MENU, pg.K_ESCAPE)
-
 
 # Initialize the game framework
 def init():
-
-    # initialize any platform-specific workarounds before pygame
     from tuxemon.core import platform
     platform.init()
-
-    # Initialize PyGame and our screen surface.
     if PLATFORM == 'pygame':
         pygame_init()
 
 
 # Fetches a resource file
+# note: this has the potential of being a bottle neck doing to all the checking of paths
+# eventually, this should be configured at game launch, or in a config file instead
+# of looking all over creation for the required files.
 def fetch(*args):
     relative_path = os.path.join(*args)
 
     for mod_name in CONFIG.mods:
+        # when assets are in folder with the source
         path = os.path.join(paths.mods_folder, mod_name, relative_path)
+        logger.debug("searching asset: %s", path)
         if os.path.exists(path):
             return path
 
-    raise IOError(relative_path)
+        # when assets are in a system path (like for os packages and android)
+        for root_path in paths.system_installed_folders:
+            path = os.path.join(root_path, "mods", mod_name, relative_path)
+            logger.debug("searching asset: %s", path)
+            if os.path.exists(path):
+                return path
+
+        # mods folder is in same folder as the launch script
+        path = os.path.join(paths.BASEDIR, "mods", mod_name, relative_path)
+        logger.debug("searching asset: %s", path)
+        if os.path.exists(path):
+            return path
+
+    raise OSError(f"cannot load file {relative_path}")

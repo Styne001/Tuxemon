@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Tuxemon
 # Copyright (C) 2014, William Edwards <shadowapex@gmail.com>,
@@ -27,22 +26,16 @@
 #
 
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import logging
+from collections import namedtuple
 
 from tuxemon.core.tools import cast_values
-from collections import namedtuple
-from tuxemon.core.control import Control  # for type introspection
-assert Control
 
 logger = logging.getLogger(__name__)
 
 
-class ItemCondition(object):
+class ItemCondition:
     """ ItemConditions are evaluated by items.
 
     ItemCondition subclasses implement "conditions" defined in Tuxemon items.
@@ -86,7 +79,7 @@ class ItemCondition(object):
     valid_parameters = list()
     _param_factory = None
 
-    def __init__(self, context, game, user, parameters):
+    def __init__(self, context, session,  user, parameters):
         """
 
         :type context: str
@@ -94,7 +87,7 @@ class ItemCondition(object):
         :type parameters: list
         """
 
-        self.game = game
+        self.session = session
         self.user = user
         self.context = context
 

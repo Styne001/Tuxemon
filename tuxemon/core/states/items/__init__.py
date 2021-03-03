@@ -1,13 +1,9 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 from tuxemon.core import tools
 from tuxemon.core.locale import T
 from tuxemon.core.menu.interface import MenuItem
 from tuxemon.core.menu.menu import Menu
 from tuxemon.core.menu.quantity import QuantityMenu
+from tuxemon.core.session import local_session
 from tuxemon.core.sprite import Sprite
 from tuxemon.core.ui.text import TextArea
 
@@ -33,11 +29,11 @@ class ItemMenuState(Menu):
         self.sprites.add(self.item_sprite)
 
         # do not move this line
-        super(ItemMenuState, self).startup(**kwargs)
+        super().startup(**kwargs)
         self.menu_items.line_spacing = tools.scale(7)
 
         # this is the area where the item description is displayed
-        rect = self.game.screen.get_rect()
+        rect = self.client.screen.get_rect()
         rect.top = tools.scale(106)
         rect.left = tools.scale(3)
         rect.width = tools.scale(250)
@@ -60,8 +56,8 @@ class ItemMenuState(Menu):
         return rect
 
     def determine_state_called_from(self):
-        dex = self.game.active_states.index(self)
-        return self.game.active_states[dex + 1].name
+        dex = self.client.active_states.index(self)
+        return self.client.active_states[dex + 1].name
 
     def on_menu_selection(self, menu_item):
         """ Called when player has selected something from the inventory
@@ -74,12 +70,12 @@ class ItemMenuState(Menu):
         item = menu_item.game_object
         state = self.determine_state_called_from()
 
-        if not any(menu_item.game_object.validate(m) for m in self.game.player1.monsters):
+        if not any(menu_item.game_object.validate(m) for m in local_session.player.monsters):
             msg = T.format('item_no_available_target', {'name': item.name})
-            tools.open_dialog(self.game, [msg])
+            tools.open_dialog(local_session, [msg])
         elif state not in item.usable_in:
             msg = T.format('item_cannot_use_here', {'name': item.name})
-            tools.open_dialog(self.game, [msg])
+            tools.open_dialog(local_session, [msg])
         else:
             self.open_confirm_use_menu(item)
 
@@ -90,35 +86,29 @@ class ItemMenuState(Menu):
         """
 
         def use_item(menu_item):
-            player = self.game.player1
+            player = local_session.player
             monster = menu_item.game_object
 
             # item must be used before state is popped.
-            # don't try to combine with "if result..." condition below
             result = item.use(player, monster)
-            self.game.pop_state()  # pop the monster screen
-            self.game.pop_state()  # pop the item screen
-
-            msg_type = 'use_success' if result['success'] else 'use_failure'
-            template = getattr(item, msg_type)
-            if template:
-                message = T.translate(template)
-                tools.open_dialog(self.game, [message])
+            self.client.pop_state()  # pop the monster screen
+            self.client.pop_state()  # pop the item screen
+            tools.show_item_result_as_dialog(local_session, item, result)
 
         def confirm():
-            self.game.pop_state()  # close the confirm dialog
+            self.client.pop_state()  # close the confirm dialog
             # TODO: allow items to be used on player or "in general"
 
-            menu = self.game.push_state("MonsterMenuState")
+            menu = self.client.push_state("MonsterMenuState")
             menu.is_valid_entry = item.validate
             menu.on_menu_selection = use_item
 
         def cancel():
-            self.game.pop_state()  # close the use/cancel menu
+            self.client.pop_state()  # close the use/cancel menu
 
         def open_choice_menu():
             # open the menu for use/cancel
-            menu = self.game.push_state("Menu")
+            menu = self.client.push_state("Menu")
             menu.shrink_to_items = True
 
             menu_items_map = (
@@ -160,7 +150,7 @@ class ItemMenuState(Menu):
 
         :return:
         """
-        inventory = self.game.player1.inventory.values()
+        inventory = local_session.player.inventory.values()
 
         # required because the max() below will fail if inv empty
         if not inventory:
@@ -210,11 +200,11 @@ class ShopMenuState(Menu):
         self.sprites.add(self.item_sprite)
 
         # do not move this line
-        super(ShopMenuState, self).startup(**kwargs)
+        super().startup(**kwargs)
         self.menu_items.line_spacing = tools.scale(7)
 
         # this is the area where the item description is displayed
-        rect = self.game.screen.get_rect()
+        rect = self.client.screen.get_rect()
         rect.top = tools.scale(106)
         rect.left = tools.scale(3)
         rect.width = tools.scale(250)
@@ -252,14 +242,17 @@ class ShopMenuState(Menu):
                 return
 
             if self.buyer:
-                self.seller.give_item(self.game, self.buyer, item, quantity)
+                self.seller.give_item(self.client, self.buyer, item, quantity)
             else:
-                self.seller.alter_item_quantity(self.game, item.slug, -quantity)
+                self.seller.alter_item_quantity(self.client, item.slug, -quantity)
             self.reload_items()
+            if not self.seller.has_item(item.slug):
+                # We're pointing at a new item
+                self.on_menu_selection_change()
 
         item_dict = self.seller.inventory[item.slug]
         max_quantity = None if item_dict.get("infinite") else item_dict['quantity']
-        self.game.push_state(
+        self.client.push_state(
             "QuantityMenu",
             callback=use_item,
             max_quantity=max_quantity,

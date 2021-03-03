@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Tuxemon
 # Copyright (c) 2014-2017 William Edwards <shadowapex@gmail.com>,
@@ -19,10 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import logging
 
@@ -71,20 +66,20 @@ class TranslatedDialogAction(EventAction):
             if "=" in param:
                 replace.append(param)
             else:
-                avatar = get_avatar(self.game, param)
+                avatar = get_avatar(self.session, param)
 
         self.open_dialog(
             process_translate_text(
-                self.game,
+                self.session,
                 key,
                 replace,
             ), avatar
         )
 
     def update(self):
-        if self.game.get_state_name("DialogState") is None:
+        if self.session.client.get_state_by_name("DialogState") is None:
             self.stop()
 
     def open_dialog(self, pages, avatar):
         logger.info("Opening dialog window")
-        open_dialog(self.game, pages, avatar)
+        open_dialog(self.session, pages, avatar)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Tuxemon
 # Copyright (C) 2014, William Edwards <shadowapex@gmail.com>,
@@ -30,22 +29,17 @@
 #
 #
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import logging
-from tuxemon.core.tools import cast_values
-from tuxemon.core.npc import NPC
 from collections import namedtuple
-from tuxemon.core.control import Control  # for type introspection
-assert Control
+
+from tuxemon.core.npc import NPC
+from tuxemon.core.tools import cast_values
 
 logger = logging.getLogger(__name__)
 
 
-class ItemEffect(object):
+class ItemEffect:
     """ ItemEffects are executed by items.
 
     ItemEffect subclasses implement "effects" defined in Tuxemon items.
@@ -89,14 +83,14 @@ class ItemEffect(object):
     valid_parameters = list()
     _param_factory = None
 
-    def __init__(self, game, user: NPC, parameters):
+    def __init__(self, session, user, parameters):
         """
 
         :type user: NPC
         :type parameters: list
         """
 
-        self.game = game
+        self.session = session
         self.user = user
 
         # TODO: METACLASS

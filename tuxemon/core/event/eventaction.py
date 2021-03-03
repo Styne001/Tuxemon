@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Tuxemon
 # Copyright (C) 2014, William Edwards <shadowapex@gmail.com>,
@@ -23,23 +22,16 @@
 #
 # Leif Theden <leif.theden@gmail.com>
 #
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import logging
 from collections import namedtuple
 
 from tuxemon.core.tools import cast_values
 
-from tuxemon.core.control import Control  # for type introspection
-assert Control
-
 logger = logging.getLogger(__name__)
 
 
-class EventAction(object):
+class EventAction:
     """ EventActions are executed during gameplay.
 
     EventAction subclasses implement "actions" defined in Tuxemon maps.
@@ -103,13 +95,13 @@ class EventAction(object):
     valid_parameters = list()
     _param_factory = None
 
-    def __init__(self, game, parameters):
+    def __init__(self, session, parameters):
         """
 
-        :type game: tuxemon.core.control.Control
-        :type parameters: list
+        :param tuxemon.core.session.Session session:
+        :param List parameters:
         """
-        self.game = game
+        self.session = session
 
         # TODO: METACLASS
         # make a namedtuple class that will generate the parameters
